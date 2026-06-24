@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     body.conclusionActions = [
       {
         type: "WEBHOOK",
-        url: `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://viral-clips-dashboard.vercel.app"}/api/opus-webhook`,
+        url: "https://viral-clips-dashboard.vercel.app/api/opus-webhook",
         notifyFailure: true,
       },
     ];
