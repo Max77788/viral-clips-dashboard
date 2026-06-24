@@ -21,11 +21,11 @@ export async function POST(req: NextRequest) {
       videoUrl: url.trim(),
     };
 
-    // Add webhook for async completion notification
+    // Add webhook for async completion notification — our dashboard app handles scheduling
     body.conclusionActions = [
       {
         type: "WEBHOOK",
-        url: "https://n8n.mom-ai-agency.site/webhook/opus-project-done",
+        url: `${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "https://viral-clips-dashboard.vercel.app"}/api/opus-webhook`,
         notifyFailure: true,
       },
     ];
