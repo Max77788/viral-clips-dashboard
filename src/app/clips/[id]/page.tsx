@@ -25,6 +25,7 @@ interface JobMeta {
   url: string;
   status: string;
   stage?: string;
+  error?: string;
 }
 
 interface SocialAccount {
@@ -78,7 +79,7 @@ export default function ClipsPage() {
         if (data.accounts?.length) {
           setAccounts(data.accounts);
           // Auto-select available channels
-          const availableChannels = new Set(
+          const availableChannels = new Set<string>(
             data.accounts.map((a: SocialAccount) => a.platform)
           );
           setChannels(availableChannels);
@@ -102,7 +103,7 @@ export default function ClipsPage() {
         if (clipsData.clips?.length) {
           setClips(clipsData.clips);
           setSelectedClips(
-            new Set(clipsData.clips.map((_: any, i: number) => i))
+            new Set<number>(clipsData.clips.map((_: any, i: number) => i))
           );
         }
 

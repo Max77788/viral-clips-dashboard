@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const GUILLERMO_EMAIL = "guillermo@example.com";
+const GUILLERMO_EMAIL = process.env.GUILLERMO_EMAIL || "guillermo@example.com";
 
 export async function POST(req: NextRequest) {
   try {
