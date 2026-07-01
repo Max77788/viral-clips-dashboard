@@ -45,7 +45,24 @@ export async function GET(
       throw new Error(`Opus API error (${response.status})`);
     }
 
-    const rawClips: OpusClip[] = await response.json();
+    const rawBody = await response.json();
+
+    // Opus exportable-clips API can return either:
+    //   - An array of clips (when clips are ready)
+    //   - An object { data: [...], total: N } (paginated)
+    //   - An object { projectId, stage, ... } (when still processing)
+    const rawClips: OpusClip[] = Array.isArray(rawBody)
+      ? rawBody
+      : Array.isArray(rawBody?.data)
+        ? rawBody.data
+        : Array.isArray(rawBody?.clips)
+          ? rawBody.clips
+          : [];
+
+    if (rawClips.length === 0 && !Array.isArray(rawBody)) {
+      // Response looks like a status object (still processing or not found)
+      return NextResponse.json({ clips: [], status: rawBody?.stage === "DONE" ? "done" : "processing" });
+    }
 
     const clips = rawClips.map((c) => {
       // Extract clipId from composite id "projectId.curationId"
