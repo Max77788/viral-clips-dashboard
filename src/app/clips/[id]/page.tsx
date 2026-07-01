@@ -90,34 +90,55 @@ export default function ClipsPage() {
 
   // Poll for clips
   useEffect(() => {
+    let cancelled = false;
+    let pollCount = 0;
+    const MAX_POLLS = 120; // 10 minutes at 5s intervals
+
     const poll = async () => {
+      if (cancelled) return;
+      pollCount++;
       try {
         const [metaRes, clipsRes] = await Promise.all([
-          fetch(`/api/job/${projectId}`),
-          fetch(`/api/clips/${projectId}`),
+          fetch(`/api/job/${projectId}`).catch(() => null),
+          fetch(`/api/clips/${projectId}`).catch(() => null),
         ]);
-        const metaData = await metaRes.json();
-        const clipsData = await clipsRes.json();
 
+        const metaData = metaRes?.ok ? await metaRes.json() : {};
+        const clipsData = clipsRes?.ok ? await clipsRes.json() : {};
+
+        if (cancelled) return;
         setMeta(metaData);
+
+        // If we got clips, show them regardless of job API status
         if (clipsData.clips?.length) {
           setClips(clipsData.clips);
           setSelectedClips(
             new Set<number>(clipsData.clips.map((_: any, i: number) => i))
           );
+          setLoading(false);
+          return; // stop polling
         }
 
+        // Stop on terminal job status
         if (metaData.status === "done" || metaData.status === "failed") {
+          setLoading(false);
+          return; // stop polling
+        }
+
+        // Timeout safeguard
+        if (pollCount >= MAX_POLLS) {
+          console.warn("[Clips] Poll timeout — giving up");
           setLoading(false);
         }
       } catch (err) {
         console.error(err);
+        if (pollCount >= MAX_POLLS) setLoading(false);
       }
     };
 
     poll();
     const interval = setInterval(poll, 5000);
-    return () => clearInterval(interval);
+    return () => { cancelled = true; clearInterval(interval); };
   }, [projectId]);
 
   const toggleClip = (idx: number) => {
