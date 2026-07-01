@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 
 export default function HomePage() {
   const [url, setUrl] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(
+    process.env.NEXT_PUBLIC_GUILLERMO_EMAIL || "guillermo@example.com"
+  );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
