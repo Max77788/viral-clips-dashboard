@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 
 export default function HomePage() {
   const [url, setUrl] = useState("");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!url.trim()) return;
+    if (!url.trim() || !email.trim()) return;
 
     setLoading(true);
     setError("");
@@ -20,7 +21,7 @@ export default function HomePage() {
       const res = await fetch("/api/process", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: url.trim() }),
+        body: JSON.stringify({ url: url.trim(), email: email.trim() }),
       });
 
       const data = await res.json();
@@ -47,6 +48,20 @@ export default function HomePage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
+              Your Email <span className="text-yellow-500">*</span>
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="guillermo@example.com"
+              className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-yellow-500 focus:ring-1 focus:ring-yellow-500 transition"
+              disabled={loading}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
               YouTube Video URL
             </label>
             <input
@@ -67,7 +82,7 @@ export default function HomePage() {
 
           <button
             type="submit"
-            disabled={loading || !url.trim()}
+            disabled={loading || !url.trim() || !email.trim()}
             className="w-full py-3 px-6 bg-yellow-500 hover:bg-yellow-400 disabled:bg-gray-700 disabled:text-gray-500 text-black font-bold rounded-lg transition text-lg"
           >
             {loading ? (

@@ -6,8 +6,15 @@ const ORG_ID = process.env.OPUS_ORG_ID!;
 
 export async function POST(req: NextRequest) {
   try {
-    const { url } = await req.json();
+    const { url, email } = await req.json();
     if (!url) return NextResponse.json({ error: "URL required" }, { status: 400 });
+    if (!email) return NextResponse.json({ error: "Email required" }, { status: 400 });
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      return NextResponse.json({ error: "Invalid email address" }, { status: 400 });
+    }
 
     if (!API_KEY) {
       return NextResponse.json(
@@ -16,16 +23,20 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Build webhook URL with email so the webhook knows who to notify
+    const encodedEmail = encodeURIComponent(email.trim());
+    const webhookUrl = `https://viral-clips-dashboard.vercel.app/api/opus-webhook?email=${encodedEmail}`;
+
     // Create clip project via Opus Pro API
     const body: Record<string, unknown> = {
       videoUrl: url.trim(),
     };
 
-    // Add webhook for async completion notification — our dashboard app handles scheduling
+    // Add webhook for async completion notification
     body.conclusionActions = [
       {
         type: "WEBHOOK",
-        url: "https://viral-clips-dashboard.vercel.app/api/opus-webhook",
+        url: webhookUrl,
         notifyFailure: true,
       },
     ];

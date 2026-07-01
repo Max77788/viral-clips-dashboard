@@ -54,7 +54,10 @@ export async function POST(req: NextRequest) {
     const projectId = body.projectId || body.id;
     const status = body.status || body.stage || "";
 
-    console.log(`[Opus Webhook] Received: projectId=${projectId}, status=${status}`);
+    // Extract email from webhook URL query param
+    const email = req.nextUrl.searchParams.get("email") || "";
+
+    console.log(`[Opus Webhook] Received: projectId=${projectId}, status=${status}, email=${email ? email.slice(0, 30) + "..." : "none"}`);
 
     if (!projectId) {
       return NextResponse.json({ error: "Missing projectId" }, { status: 400 });
@@ -95,6 +98,24 @@ export async function POST(req: NextRequest) {
 
     const rawClips: any[] = await clipsRes.json();
     console.log(`[Opus Webhook] Fetched ${rawClips.length} clips for project ${projectId}`);
+
+    // ── Send email notification to the user ──
+    if (email) {
+      const { sendClipNotification } = await import("@/lib/email");
+      const emailResult = await sendClipNotification({
+        email,
+        projectId,
+        clips: rawClips.slice(0, 10),
+        sourceUrl: body.sourceUri || body.url || "",
+      });
+      if (emailResult.ok) {
+        console.log(`[Opus Webhook] Email notification sent to ${email}`);
+      } else {
+        console.error(`[Opus Webhook] Email notification failed: ${emailResult.error}`);
+      }
+    } else {
+      console.log(`[Opus Webhook] No email provided — skipping notification`);
+    }
 
     if (rawClips.length === 0) {
       return NextResponse.json({ received: true, clips: 0, message: "No clips found" });
